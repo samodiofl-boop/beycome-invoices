@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Invoice - Beycome Payroll</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e8f1f7 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: #152330;
+        }
+
+        .flow-container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(21, 35, 48, 0.08);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e5e7eb;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FF7849 0%, #FF9B77 100%);
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 33%;
+        }
+
+        .step {
+            padding: 3rem 2.5rem;
+            display: none;
+            animation: fadeSlideIn 0.5s ease-out;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .step-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #FFF4F0 0%, #FFE8E0 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .step-icon svg {
+            width: 28px;
+            height: 28px;
+            stroke: #FF7849;
+            stroke-width: 2;
+        }
+
+        .step-icon.success-icon {
+            background: linear-gradient(135deg, #E8FAF5 0%, #D1FAE5 100%);
+        }
+
+        .success-icon svg {
+            stroke: #10B981;
+        }
+
+        .step-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #152330;
+            margin-bottom: 0.75rem;
+        }
+
+        .step-subtitle {
+            font-size: 1rem;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .info-badge {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-row {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            align-items: center;
+            padding: 0.75rem 0;
+        }
+
+        .info-row:not(:last-child) {
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 0.875rem;
+            color: #152330;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .info-value.negative {
+            color: #DC2626;
+        }
+
+        .agent-dropdown {
+            margin-bottom: 1.5rem;
+        }
+
+        .agent-dropdown label {
+            display: block;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .agent-select-main {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: #152330;
+            background: white;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            transition: all 0.2s ease;
+        }
+
+        .agent-select-main:hover {
+            border-color: #cbd5e1;
+        }
+
+        .agent-select-main:focus {
+            outline: none;
+            border-color: #FF7849;
+            box-shadow: 0 0 0 3px rgba(255, 120, 73, 0.1);
+        }
+
+        .password-group {
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .password-group.show {
+            display: block;
+        }
+
+        .password-group label {
+            display: block;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .password-input-wrap {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .password-input {
+            flex: 1;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: #152330;
+            letter-spacing: 0.1em;
+            transition: all 0.2s ease;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: #FF7849;
+            box-shadow: 0 0 0 3px rgba(255, 120, 73, 0.1);
+        }
+
+        .password-input.error {
+            border-color: #DC2626;
+            background: #FEF2F2;
+        }
+
+        .verify-btn {
+            padding: 0.875rem 1.5rem;
+            background: linear-gradient(135deg, #FF7849 0%, #FF9B77 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .verify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 120, 73, 0.3);
+        }
+
+        .error-message {
+            color: #DC2626;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-badge {
+            background: linear-gradient(135deg, #E8FAF5 0%, #D1FAE5 100%);
+            border: 1px solid #6EE7B7;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .success-badge-title {
+            font-weight: 600;
+            color: #065F46;
+            margin-bottom: 0.25rem;
+        }
+
+        .success-badge-text {
+            font-size: 0.875rem;
+            color: #047857;
+        }
+
+        .verified-badge {
+            background: linear-gradient(135deg, #E8FAF5 0%, #D1FAE5 100%);
+            border: 1px solid #6EE7B7;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .verified-badge.show {
+            display: flex;
+        }
+
+        .verified-badge svg {
+            width: 18px;
+            height: 18px;
+            stroke: #059669;
+        }
+
+        .verified-badge span {
+            font-weight: 600;
+            color: #065F46;
+            font-size: 0.9rem;
+        }
+
+        .form-section {
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .form-section.show {
+            display: block;
+        }
+
+        .form-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: #152330;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:hover {
+            border-color: #cbd5e1;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #FF7849;
+            box-shadow: 0 0 0 3px rgba(255, 120, 73, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #94a3b8;
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .tax-acknowledgment {
+            display: none;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tax-acknowledgment.show {
+            display: flex;
+        }
+
+        .tax-acknowledgment:hover {
+            border-color: #cbd5e1;
+        }
+
+        .tax-acknowledgment.checked {
+            background: #E8FAF5;
+            border-color: #6EE7B7;
+        }
+
+        .tax-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            border-radius: 4px;
+            flex-shrink: 0;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .tax-acknowledgment.checked .tax-checkbox {
+            background: #059669;
+            border-color: #059669;
+        }
+
+        .tax-checkbox svg {
+            width: 12px;
+            height: 12px;
+            stroke: white;
+            stroke-width: 3;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .tax-acknowledgment.checked .tax-checkbox svg {
+            opacity: 1;
+        }
+
+        .tax-text {
+            font-size: 0.85rem;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, #FF7849 0%, #FF9B77 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 120, 73, 0.3);
+            display: none;
+        }
+
+        .btn-primary.show {
+            display: block;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 120, 73, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: white;
+            color: #152330;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.75rem;
+        }
+
+        .btn-secondary:hover {
+            border-color: #FF7849;
+            color: #FF7849;
+        }
+
+        .auto-badge {
+            display: inline-block;
+            background: #E8FAF5;
+            color: #059669;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            margin-left: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        /* Confirmation Step Styles */
+        .confirm-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .confirm-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .confirm-box {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .confirm-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        .confirm-row:not(:last-child) {
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .confirm-label {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .confirm-value {
+            color: #152330;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .confirm-value.negative {
+            color: #DC2626;
+        }
+
+        .confirm-total {
+            background: linear-gradient(135deg, #FFF4F0 0%, #FFE8E0 100%);
+            border: 2px solid #FFCBB8;
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .confirm-total-label {
+            font-weight: 600;
+            color: #152330;
+        }
+
+        .confirm-total-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #FF7849;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-group .btn-secondary {
+            margin-top: 0;
+            flex: 1;
+        }
+
+        .btn-group .btn-primary {
+            flex: 2;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .step {
+                padding: 2rem 1.5rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-group .btn-secondary,
+            .btn-group .btn-primary {
+                flex: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="flow-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- Step 1: Login/Verify -->
+        <div class="step active" id="loginStep">
+            <div class="step-header">
+                <div class="step-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <h1 class="step-title">Welcome</h1>
+                <p class="step-subtitle">Select your name and enter your code to continue</p>
+            </div>
+
+            <!-- Agent Selection -->
+            <div class="agent-dropdown">
+                <label for="agentSelect">Select Your Name</label>
+                <select id="agentSelect" class="agent-select-main">
+                    <option value="">Choose your name...</option>
+                </select>
+            </div>
+
+            <!-- Password Entry -->
+            <div class="password-group" id="passwordGroup">
+                <label for="passwordInput">Enter Your Code</label>
+                <div class="password-input-wrap">
+                    <input type="password" id="passwordInput" class="password-input" placeholder="••••••" maxlength="10">
+                    <button type="button" class="verify-btn" id="verifyBtn">Verify</button>
+                </div>
+                <div class="error-message" id="errorMessage">Incorrect code. Please try again.</div>
+            </div>
+        </div>
+
+        <!-- Step 2: Invoice Form -->
+        <div class="step" id="formStep">
+            <div class="step-header">
+                <div class="step-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <h1 class="step-title">Invoice Details</h1>
+                <p class="step-subtitle">Review your info and add any additional earnings</p>
+            </div>
+
+            <form id="invoiceForm">
+                <!-- Verified Badge -->
+                <div class="verified-badge show">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span id="verifiedName">Kevin Gutierrez</span>
+                </div>
+
+                <!-- Auto-filled Info -->
+                <div class="info-badge">
+                    <div class="info-row">
+                        <span class="info-label">Pay Period <span class="auto-badge">Auto</span></span>
+                        <span class="info-value" id="payPeriodDisplay">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Invoice # <span class="auto-badge">Auto</span></span>
+                        <span class="info-value" id="invoiceNumberDisplay">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Payment Method</span>
+                        <span class="info-value" id="paymentMethodDisplay">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Base Salary</span>
+                        <span class="info-value" id="baseSalaryDisplay">-</span>
+                    </div>
+                </div>
+
+                <!-- Additional Earnings -->
+                <div class="form-section show">
+                    <div class="form-section-title">Additional Earnings (if any)</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Commissions</label>
+                            <input type="number" id="commissions" class="form-input" placeholder="$0.00" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Incentives</label>
+                            <input type="number" id="incentives" class="form-input" placeholder="$0.00" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Bonuses</label>
+                            <input type="number" id="bonuses" class="form-input" placeholder="$0.00" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Deductions</label>
+                            <input type="number" id="deductions" class="form-input" placeholder="$0.00" step="0.01" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales Details -->
+                <div class="form-section show">
+                    <div class="form-section-title">Optional Details</div>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label class="form-label">Sales Breakdown (for commission)</label>
+                            <textarea id="salesDetails" class="form-input" placeholder="e.g., Property 123 Main St - $500&#10;Property 456 Oak Ave - $350"></textarea>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label">Additional Notes</label>
+                            <textarea id="notes" class="form-input" placeholder="Any other notes for this invoice..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Preview -->
+                <div class="info-badge" style="background: linear-gradient(135deg, #FFF4F0 0%, #FFE8E0 100%); border-color: #FFCBB8;">
+                    <div class="info-row" style="border: none; padding: 0.5rem 0;">
+                        <span class="info-label" style="font-weight: 600; color: #152330;">Total Amount</span>
+                        <span class="info-value" id="totalDisplay" style="font-size: 1.25rem; color: #FF7849;">$0.00</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary show" id="reviewBtn">
+                    Review Invoice
+                </button>
+            </form>
+        </div>
+
+        <!-- Step 3: Confirmation -->
+        <div class="step" id="confirmStep">
+            <div class="step-header">
+                <div class="step-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                </div>
+                <h1 class="step-title">Confirm & Submit</h1>
+                <p class="step-subtitle">Please review your invoice details before submitting</p>
+            </div>
+
+            <!-- Contractor Info -->
+            <div class="confirm-section">
+                <div class="confirm-section-title">Contractor Information</div>
+                <div class="confirm-box">
+                    <div class="confirm-row">
+                        <span class="confirm-label">Name</span>
+                        <span class="confirm-value" id="confirmName">-</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Pay Period</span>
+                        <span class="confirm-value" id="confirmPeriod">-</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Invoice #</span>
+                        <span class="confirm-value" id="confirmInvoice">-</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">Payment Method</span>
+                        <span class="confirm-value" id="confirmPayment">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Earnings Breakdown -->
+            <div class="confirm-section">
+                <div class="confirm-section-title">Earnings Breakdown</div>
+                <div class="confirm-box">
+                    <div class="confirm-row">
+                        <span class="confirm-label">Base Salary</span>
+                        <span class="confirm-value" id="confirmBase">-</span>
+                    </div>
+                    <div class="confirm-row" id="confirmCommissionsRow" style="display: none;">
+                        <span class="confirm-label">Commissions</span>
+                        <span class="confirm-value" id="confirmCommissions">-</span>
+                    </div>
+                    <div class="confirm-row" id="confirmIncentivesRow" style="display: none;">
+                        <span class="confirm-label">Incentives</span>
+                        <span class="confirm-value" id="confirmIncentives">-</span>
+                    </div>
+                    <div class="confirm-row" id="confirmBonusesRow" style="display: none;">
+                        <span class="confirm-label">Bonuses</span>
+                        <span class="confirm-value" id="confirmBonuses">-</span>
+                    </div>
+                    <div class="confirm-row" id="confirmDeductionsRow" style="display: none;">
+                        <span class="confirm-label">Deductions</span>
+                        <span class="confirm-value negative" id="confirmDeductions">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total -->
+            <div class="confirm-total">
+                <span class="confirm-total-label">Total Amount Due</span>
+                <span class="confirm-total-value" id="confirmTotal">$0.00</span>
+            </div>
+
+            <!-- Tax Acknowledgment -->
+            <div class="tax-acknowledgment show" id="taxAcknowledgment" onclick="toggleTaxAcknowledgment()">
+                <div class="tax-checkbox">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <div class="tax-text">
+                    I acknowledge that I am solely responsible for the calculation, reporting, and payment of any applicable taxes related to this invoice, in accordance with IRS Form W-8 and the tax laws of my country of residence.
+                </div>
+            </div>
+
+            <input type="checkbox" id="taxCheckbox" style="display: none;">
+
+            <!-- Buttons -->
+            <div class="btn-group">
+                <button type="button" class="btn-secondary" onclick="goBackToForm()">← Edit</button>
+                <button type="button" class="btn-primary show" id="submitBtn" disabled onclick="generateAndDownload()">
+                    Generate PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 4: Success -->
+        <div class="step" id="successStep">
+            <div class="step-header">
+                <div class="step-icon success-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h1 class="step-title">Invoice Generated!</h1>
+                <p class="step-subtitle" id="successMessage">Your invoice has been downloaded</p>
+            </div>
+
+            <div class="success-badge">
+                <div class="success-badge-title" id="invoiceSummary">Invoice Ready</div>
+                <div class="success-badge-text">Please email your invoice to: <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="394a5854795b5c405a56545c175a5654">[email&#160;protected]</a></strong></div>
+            </div>
+
+            <button class="btn-primary show" onclick="window.location.reload()">
+                Create Another Invoice
+            </button>
+        </div>
+    </div>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        // Contractor data with base salary, payment method, and unique code
+        const contractors = [
+            { name: "Kevin Gutierrez", salary: 500, payment: "Wire", code: "KEV4821" },
+            { name: "Rose Florence", salary: 500, payment: "PayPal", code: "ROS7392" },
+            { name: "Omran Terro", salary: 850, payment: "Wire", code: "OMR5147" },
+            { name: "Marc Jayrold", salary: 425, payment: "PayPal", code: "MAR8264" },
+            { name: "Kshamal Zatakia", salary: 350, payment: "PayPal", code: "KSH3958" },
+            { name: "Istiak Ahmed", salary: 1500, payment: "Wire", code: "IST2849" },
+            { name: "Maruf Alom", salary: 1350, payment: "Wire", code: "MAR9156" },
+            { name: "Christian Linaza", salary: 525, payment: "PayPal", code: "CHR4738" },
+            { name: "Kenneth Vanegas", salary: 650, payment: "Wire", code: "KEN5827" },
+            { name: "Mark Aldrin Quillosa", salary: 300, payment: "PayPal", code: "MAR3649" },
+            { name: "Warren Mckray", salary: 300, payment: "PayPal", code: "WAR8472" },
+            { name: "Giebelle Abella", salary: 300, payment: "PayPal", code: "GIE2958" },
+            { name: "Karinna Gutierez", salary: 475, payment: "Wire", code: "KAR7361" },
+            { name: "Michael Vincent", salary: 300, payment: "PayPal", code: "MIC4829" },
+            { name: "Lindy Linaza", salary: 325, payment: "PayPal", code: "LIN6284" },
+            { name: "Alvaro Torres", salary: 525, payment: "Wire", code: "ALV3947" }
+        ];
+
+        // Current state
+        let selectedContractor = null;
+        let taxAcknowledged = false;
+
+        // Populate dropdown
+        const agentSelect = document.getElementById('agentSelect');
+        contractors.forEach((contractor, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = contractor.name;
+            agentSelect.appendChild(option);
+        });
+
+        // Calculate pay period based on current date
+        function getPayPeriod() {
+            const today = new Date();
+            const day = today.getDate();
+            const month = today.toLocaleString('en-US', { month: 'short' });
+            const year = today.getFullYear();
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+            
+            if (day <= 15) {
+                return `${month} 1 - ${month} 15, ${year}`;
+            } else {
+                return `${month} 16 - ${month} ${lastDay}, ${year}`;
+            }
+        }
+
+        // Get pay period code for invoice number
+        function getPayPeriodCode() {
+            const today = new Date();
+            const day = today.getDate();
+            const month = today.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+            
+            if (day <= 15) {
+                return `${month}-15`;
+            } else {
+                return `${month}-${lastDay}`;
+            }
+        }
+
+        // Generate invoice number: JAN-15-KEV
+        function generateInvoiceNumber(agentName) {
+            const periodCode = getPayPeriodCode();
+            const nameCode = agentName.substring(0, 3).toUpperCase();
+            return `${periodCode}-${nameCode}`;
+        }
+
+        // Show password field when agent selected
+        agentSelect.addEventListener('change', function() {
+            const passwordGroup = document.getElementById('passwordGroup');
+            const errorMessage = document.getElementById('errorMessage');
+            const passwordInput = document.getElementById('passwordInput');
+            
+            if (this.value === '') {
+                passwordGroup.classList.remove('show');
+            } else {
+                passwordGroup.classList.add('show');
+                passwordInput.value = '';
+                passwordInput.classList.remove('error');
+                errorMessage.classList.remove('show');
+                passwordInput.focus();
+            }
+        });
+
+        // Verify password
+        document.getElementById('verifyBtn').addEventListener('click', verifyPassword);
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verifyPassword();
+            }
+        });
+
+        function verifyPassword() {
+            const agentIndex = agentSelect.value;
+            const enteredCode = document.getElementById('passwordInput').value.toUpperCase();
+            const contractor = contractors[agentIndex];
+            
+            if (enteredCode === contractor.code) {
+                // Success - move to form step
+                selectedContractor = contractor;
+                
+                // Update progress bar
+                document.getElementById('progressFill').style.width = '50%';
+                
+                // Update form displays
+                document.getElementById('verifiedName').textContent = contractor.name;
+                document.getElementById('payPeriodDisplay').textContent = getPayPeriod();
+                document.getElementById('invoiceNumberDisplay').textContent = generateInvoiceNumber(contractor.name);
+                document.getElementById('paymentMethodDisplay').textContent = contractor.payment;
+                document.getElementById('baseSalaryDisplay').textContent = '$' + contractor.salary.toFixed(2);
+                
+                updateTotal();
+                
+                // Switch steps
+                document.getElementById('loginStep').classList.remove('active');
+                document.getElementById('formStep').classList.add('active');
+            } else {
+                // Error
+                document.getElementById('passwordInput').classList.add('error');
+                document.getElementById('errorMessage').classList.add('show');
+            }
+        }
+
+        // Update total calculation
+        function updateTotal() {
+            const baseSalary = selectedContractor ? selectedContractor.salary : 0;
+            const commissions = parseFloat(document.getElementById('commissions').value) || 0;
+            const incentives = parseFloat(document.getElementById('incentives').value) || 0;
+            const bonuses = parseFloat(document.getElementById('bonuses').value) || 0;
+            const deductions = parseFloat(document.getElementById('deductions').value) || 0;
+            
+            const total = baseSalary + commissions + incentives + bonuses - deductions;
+            document.getElementById('totalDisplay').textContent = '$' + total.toFixed(2);
+        }
+
+        // Listen for changes on earning fields
+        ['commissions', 'incentives', 'bonuses', 'deductions'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateTotal);
+        });
+
+        // Form submission - go to confirmation
+        document.getElementById('invoiceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showConfirmation();
+        });
+
+        function showConfirmation() {
+            const commissions = parseFloat(document.getElementById('commissions').value) || 0;
+            const incentives = parseFloat(document.getElementById('incentives').value) || 0;
+            const bonuses = parseFloat(document.getElementById('bonuses').value) || 0;
+            const deductions = parseFloat(document.getElementById('deductions').value) || 0;
+            const total = selectedContractor.salary + commissions + incentives + bonuses - deductions;
+            
+            // Update progress bar
+            document.getElementById('progressFill').style.width = '75%';
+            
+            // Populate confirmation
+            document.getElementById('confirmName').textContent = selectedContractor.name;
+            document.getElementById('confirmPeriod').textContent = getPayPeriod();
+            document.getElementById('confirmInvoice').textContent = generateInvoiceNumber(selectedContractor.name);
+            document.getElementById('confirmPayment').textContent = selectedContractor.payment;
+            document.getElementById('confirmBase').textContent = '$' + selectedContractor.salary.toFixed(2);
+            
+            // Show/hide additional rows
+            if (commissions > 0) {
+                document.getElementById('confirmCommissionsRow').style.display = 'flex';
+                document.getElementById('confirmCommissions').textContent = '$' + commissions.toFixed(2);
+            } else {
+                document.getElementById('confirmCommissionsRow').style.display = 'none';
+            }
+            
+            if (incentives > 0) {
+                document.getElementById('confirmIncentivesRow').style.display = 'flex';
+                document.getElementById('confirmIncentives').textContent = '$' + incentives.toFixed(2);
+            } else {
+                document.getElementById('confirmIncentivesRow').style.display = 'none';
+            }
+            
+            if (bonuses > 0) {
+                document.getElementById('confirmBonusesRow').style.display = 'flex';
+                document.getElementById('confirmBonuses').textContent = '$' + bonuses.toFixed(2);
+            } else {
+                document.getElementById('confirmBonusesRow').style.display = 'none';
+            }
+            
+            if (deductions > 0) {
+                document.getElementById('confirmDeductionsRow').style.display = 'flex';
+                document.getElementById('confirmDeductions').textContent = '-$' + deductions.toFixed(2);
+            } else {
+                document.getElementById('confirmDeductionsRow').style.display = 'none';
+            }
+            
+            document.getElementById('confirmTotal').textContent = '$' + total.toFixed(2);
+            
+            // Reset tax acknowledgment
+            taxAcknowledged = false;
+            document.getElementById('taxAcknowledgment').classList.remove('checked');
+            document.getElementById('submitBtn').disabled = true;
+            
+            // Switch steps
+            document.getElementById('formStep').classList.remove('active');
+            document.getElementById('confirmStep').classList.add('active');
+        }
+
+        function goBackToForm() {
+            document.getElementById('progressFill').style.width = '50%';
+            document.getElementById('confirmStep').classList.remove('active');
+            document.getElementById('formStep').classList.add('active');
+        }
+
+        function toggleTaxAcknowledgment() {
+            taxAcknowledged = !taxAcknowledged;
+            const el = document.getElementById('taxAcknowledgment');
+            const btn = document.getElementById('submitBtn');
+            
+            if (taxAcknowledged) {
+                el.classList.add('checked');
+                btn.disabled = false;
+            } else {
+                el.classList.remove('checked');
+                btn.disabled = true;
+            }
+        }
+
+        function generateAndDownload() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Generating...';
+            
+            setTimeout(() => {
+                const result = generatePDF();
+                
+                // Send email notification (fire and forget)
+                sendEmailNotification(result);
+                
+                // Update progress bar
+                document.getElementById('progressFill').style.width = '100%';
+                
+                document.getElementById('successMessage').textContent = 
+                    `Invoice for ${result.agentName} has been downloaded`;
+                document.getElementById('invoiceSummary').textContent = 
+                    `Invoice #${result.invoiceNumber} - Total: $${result.total.toFixed(2)}`;
+                
+                document.getElementById('confirmStep').classList.remove('active');
+                document.getElementById('successStep').classList.add('active');
+                
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Generate PDF';
+            }, 500);
+        }
+
+        // Generate PDF
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const agentName = selectedContractor.name;
+            const baseSalary = selectedContractor.salary;
+            const paymentType = selectedContractor.payment;
+            const commissions = parseFloat(document.getElementById('commissions').value) || 0;
+            const incentives = parseFloat(document.getElementById('incentives').value) || 0;
+            const bonuses = parseFloat(document.getElementById('bonuses').value) || 0;
+            const deductions = parseFloat(document.getElementById('deductions').value) || 0;
+            const salesDetails = document.getElementById('salesDetails').value;
+            const notes = document.getElementById('notes').value;
+            const invoiceNumber = generateInvoiceNumber(agentName);
+            const payPeriod = getPayPeriod();
+            
+            const total = baseSalary + commissions + incentives + bonuses - deductions;
+            
+            // Colors
+            const coral = [255, 120, 73];
+            const navy = [21, 35, 48];
+            const gray = [100, 116, 139];
+            const lightGray = [148, 163, 184];
+            
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 20;
+            const contentWidth = pageWidth - (margin * 2);
+            
+            // Header
+            doc.setFillColor(...coral);
+            doc.rect(0, 0, pageWidth, 45, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.setFont('helvetica', 'bold');
+            doc.text('INVOICE', margin, 28);
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text('beycome.com', pageWidth - margin, 28, { align: 'right' });
+            
+            // Main content box
+            const boxY = 55;
+            const boxHeight = 180;
+            doc.setDrawColor(229, 231, 235);
+            doc.setLineWidth(0.5);
+            doc.roundedRect(margin, boxY, contentWidth, boxHeight, 3, 3, 'S');
+            
+            let y = boxY + 15;
+            
+            // FROM section
+            doc.setTextColor(...lightGray);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('FROM:', margin + 10, y);
+            
+            // Invoice # on right
+            doc.setTextColor(...coral);
+            doc.setFontSize(9);
+            doc.text('INVOICE #: ' + invoiceNumber, pageWidth - margin - 10, y, { align: 'right' });
+            
+            y += 8;
+            doc.setTextColor(...navy);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text(agentName, margin + 10, y);
+            
+            // Date on right
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            doc.setTextColor(...gray);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Date: ' + dateStr, pageWidth - margin - 10, y, { align: 'right' });
+            
+            y += 6;
+            doc.setTextColor(...gray);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            const firstName = agentName.split(' ')[0].toLowerCase();
+            doc.text(firstName + '@beycome.com', margin + 10, y);
+            
+            doc.text('Period: ' + payPeriod, pageWidth - margin - 10, y, { align: 'right' });
+            
+            // BILL TO section
+            y += 18;
+            doc.setTextColor(...lightGray);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('BILL TO:', margin + 10, y);
+            
+            y += 8;
+            doc.setTextColor(...navy);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Beycome Corp.', margin + 10, y);
+            
+            y += 6;
+            doc.setTextColor(...gray);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text('sam@beycome.com', margin + 10, y);
+            y += 5;
+            doc.text('5701 Sunset Drive, #224', margin + 10, y);
+            y += 5;
+            doc.text('South Miami, Florida, USA', margin + 10, y);
+            
+            // Line items
+            y += 18;
+            
+            // Base Salary line
+            doc.setTextColor(...navy);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Bi-Weekly Base Salary', margin + 10, y);
+            doc.text('$' + baseSalary.toFixed(2), pageWidth - margin - 10, y, { align: 'right' });
+            
+            if (commissions > 0) {
+                y += 8;
+                doc.text('Commissions', margin + 10, y);
+                doc.text('$' + commissions.toFixed(2), pageWidth - margin - 10, y, { align: 'right' });
+            }
+            
+            if (incentives > 0) {
+                y += 8;
+                doc.text('Incentives', margin + 10, y);
+                doc.text('$' + incentives.toFixed(2), pageWidth - margin - 10, y, { align: 'right' });
+            }
+            
+            if (bonuses > 0) {
+                y += 8;
+                doc.text('Bonuses', margin + 10, y);
+                doc.text('$' + bonuses.toFixed(2), pageWidth - margin - 10, y, { align: 'right' });
+            }
+            
+            if (deductions > 0) {
+                y += 8;
+                doc.setTextColor(220, 38, 38);
+                doc.text('Deductions', margin + 10, y);
+                doc.text('-$' + deductions.toFixed(2), pageWidth - margin - 10, y, { align: 'right' });
+                doc.setTextColor(...navy);
+            }
+            
+            // Divider line
+            y += 10;
+            doc.setDrawColor(229, 231, 235);
+            doc.setLineWidth(0.3);
+            doc.line(margin + 10, y, pageWidth - margin - 10, y);
+            
+            // Balance Due
+            y += 12;
+            doc.setTextColor(...navy);
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.text('BALANCE DUE', margin + 10, y);
+            doc.setTextColor(...coral);
+            doc.setFontSize(14);
+            doc.text('$' + total.toFixed(2), pageWidth - margin - 10, y, { align: 'right' });
+            
+            // Payment Type
+            y += 12;
+            doc.setTextColor(...coral);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Payment Method: ', margin + 10, y);
+            doc.setTextColor(...gray);
+            doc.setFont('helvetica', 'normal');
+            doc.text(paymentType, margin + 10 + doc.getTextWidth('Payment Method: '), y);
+            
+            // Tax Note box
+            y += 12;
+            doc.setFillColor(255, 251, 248);
+            doc.setDrawColor(255, 200, 180);
+            doc.roundedRect(margin + 10, y, contentWidth - 20, 24, 2, 2, 'FD');
+            
+            y += 8;
+            doc.setTextColor(...navy);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Note: ', margin + 15, y);
+            doc.setFont('helvetica', 'normal');
+            const noteText = 'I am solely responsible for the calculation, reporting, and payment of any applicable taxes related to this invoice, in accordance with IRS Form W-8 and the tax laws of my country of residence.';
+            const noteLines = doc.splitTextToSize(noteText, contentWidth - 35);
+            doc.text(noteLines[0], margin + 15 + doc.getTextWidth('Note: '), y);
+            if (noteLines[1]) {
+                y += 5;
+                doc.text(noteLines[1], margin + 15, y);
+            }
+            if (noteLines[2]) {
+                y += 5;
+                doc.text(noteLines[2], margin + 15, y);
+            }
+            
+            // Sales breakdown
+            if (salesDetails.trim()) {
+                y = boxY + boxHeight + 15;
+                doc.setTextColor(...navy);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.text('Sales Breakdown:', margin, y);
+                
+                y += 8;
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(...gray);
+                doc.setFontSize(9);
+                
+                const lines = salesDetails.split('\n').slice(0, 10);
+                lines.forEach(line => {
+                    if (line.trim()) {
+                        doc.text(line.trim(), margin + 5, y);
+                        y += 6;
+                    }
+                });
+            }
+            
+            // Additional Notes
+            if (notes.trim()) {
+                y = salesDetails.trim() ? y + 8 : boxY + boxHeight + 15;
+                doc.setTextColor(...navy);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.text('Additional Notes:', margin, y);
+                
+                y += 8;
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(...gray);
+                doc.setFontSize(9);
+                
+                const noteLines = doc.splitTextToSize(notes, contentWidth);
+                noteLines.slice(0, 5).forEach(line => {
+                    doc.text(line, margin + 5, y);
+                    y += 6;
+                });
+            }
+
+            // Footer
+            const pageHeight = doc.internal.pageSize.getHeight();
+            doc.setTextColor(...lightGray);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text('beycome.com · Contractor Invoice', pageWidth / 2, pageHeight - 12, { align: 'center' });
+
+            // Save PDF
+            const fileName = `Invoice_${invoiceNumber}.pdf`;
+            doc.save(fileName);
+
+            return { agentName, invoiceNumber, total, payPeriod, paymentType, baseSalary, commissions, incentives, bonuses, deductions, salesDetails, notes };
+        }
+
+        // Send email notification via Web3Forms (free, no backend needed)
+        async function sendEmailNotification(data) {
+            try {
+                await fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        access_key: 'YOUR_WEB3FORMS_ACCESS_KEY',
+                        subject: `📄 Invoice Submitted — ${data.agentName} | Invoice #${data.invoiceNumber}`,
+                        from_name: 'Beycome Invoice System',
+                        name: data.agentName,
+                        message: [
+                            `BEYCOME CONTRACTOR INVOICE`,
+                            `═══════════════════════════════`,
+                            `Employee:  ${data.agentName}`,
+                            `Invoice #: ${data.invoiceNumber}`,
+                            `Pay Period: ${data.payPeriod}`,
+                            `Payment:   ${data.paymentType}`,
+                            ``,
+                            `Base Salary:  $${data.baseSalary.toFixed(2)}`,
+                            data.commissions > 0 ? `Commissions:  $${data.commissions.toFixed(2)}` : '',
+                            data.incentives > 0  ? `Incentives:   $${data.incentives.toFixed(2)}` : '',
+                            data.bonuses > 0     ? `Bonuses:      $${data.bonuses.toFixed(2)}` : '',
+                            data.deductions > 0  ? `Deductions:  -$${data.deductions.toFixed(2)}` : '',
+                            `───────────────────────────────`,
+                            `TOTAL DUE:    $${data.total.toFixed(2)}`,
+                            ``,
+                            `Sales Details:`,
+                            data.salesDetails || 'N/A',
+                            ``,
+                            `Notes:`,
+                            data.notes || 'N/A',
+                            ``,
+                            `Submitted: ${new Date().toLocaleString('en-US')}`
+                        ].filter(l => l !== '').join('\n')
+                    })
+                });
+            } catch(e) {
+                console.warn('Email notification failed:', e);
+            }
+        }
+    </script>
+</body>
+</html>
