@@ -1157,9 +1157,6 @@
             setTimeout(() => {
                 const result = generatePDF();
                 
-                // Send email notification (fire and forget)
-                sendEmailNotification(result);
-                
                 // Update progress bar
                 document.getElementById('progressFill').style.width = '100%';
                 
@@ -1512,8 +1509,6 @@
             btn.textContent = 'Submitting...';
 
             const invoiceSummary = document.getElementById('invoiceSummary').textContent;
-            const form = document.getElementById('pdfUploadForm');
-            const formData = new FormData(form);
 
             // Check file size (max 5MB)
             const filesize = selectedPdfFile.size / 1024;
@@ -1524,11 +1519,13 @@
                 return;
             }
 
+            const formData = new FormData();
             formData.append('access_key', '05282e9a-c9b6-41aa-a4fe-0a16c611988d');
             formData.append('subject', `Invoice Submitted - ${selectedContractor.name} - ${invoiceSummary}`);
             formData.append('from_name', selectedContractor.name);
             formData.append('email', 'sam@beycome.com');
             formData.append('message', `Invoice submitted by ${selectedContractor.name}.\n\n${invoiceSummary}`);
+            formData.append('attachment', selectedPdfFile, selectedPdfFile.name);
 
             // No headers — browser auto-adds correct multipart/form-data boundary
             fetch('https://api.web3forms.com/submit', {
@@ -1551,9 +1548,6 @@
                 btn.disabled = false;
                 btn.textContent = 'Submit Invoice to Beycome';
                 showToast('⚠️ Submission failed. Please check your connection.', 'error');
-            })
-            .then(() => {
-                form.reset();
             });
         }
 
