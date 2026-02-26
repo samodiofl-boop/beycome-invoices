@@ -840,7 +840,7 @@
             </div>
         </div>
 
-        <!-- Step 4: Success -->
+        <!-- Step 4: Upload PDF -->
         <div class="step" id="successStep">
             <div class="step-header">
                 <div class="step-icon success-icon">
@@ -848,17 +848,73 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
-                <h1 class="step-title">Invoice Generated!</h1>
-                <p class="step-subtitle" id="successMessage">Your invoice has been downloaded</p>
+                <h1 class="step-title">Invoice Downloaded!</h1>
+                <p class="step-subtitle">Now upload the PDF below to submit it to Beycome</p>
             </div>
 
             <div class="success-badge">
                 <div class="success-badge-title" id="invoiceSummary">Invoice Ready</div>
-                <div class="success-badge-text">Please email your invoice to: <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="394a5854795b5c405a56545c175a5654">[email&#160;protected]</a></strong></div>
+                <div class="success-badge-text" id="successMessage">Your PDF has been saved to your device. Please upload it below.</div>
+            </div>
+
+            <!-- Upload Area -->
+            <div id="uploadArea" style="
+                border: 2px dashed #e2e8f0;
+                border-radius: 14px;
+                padding: 2rem;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                margin-bottom: 1.5rem;
+                background: #f8fafc;
+            " onclick="document.getElementById('pdfUpload').click()"
+               ondragover="event.preventDefault(); this.style.borderColor='#FF7849'; this.style.background='#FFF4F0';"
+               ondragleave="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';"
+               ondrop="handleDrop(event)">
+                <input type="file" id="pdfUpload" accept=".pdf" style="display:none;" onchange="handleFileSelect(event)">
+                <div id="uploadPrompt">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#FF7849" style="width:40px;height:40px;margin:0 auto 1rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <p style="font-weight:600;color:#152330;margin-bottom:0.25rem;">Click or drag your PDF here</p>
+                    <p style="font-size:0.8rem;color:#94a3b8;">Upload the invoice that just downloaded</p>
+                </div>
+                <div id="uploadSelected" style="display:none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#059669" style="width:36px;height:36px;margin:0 auto 0.75rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p id="selectedFileName" style="font-weight:600;color:#065F46;margin-bottom:0.25rem;"></p>
+                    <p style="font-size:0.8rem;color:#059669;">✓ Ready to submit — click below</p>
+                </div>
+            </div>
+
+            <button class="btn-primary show" id="submitPdfBtn" onclick="submitPDF()" disabled style="opacity:0.5;">
+                Submit Invoice to Beycome
+            </button>
+            <button class="btn-secondary" onclick="window.location.reload()">
+                Start Over
+            </button>
+        </div>
+
+        <!-- Step 5: Final Success -->
+        <div class="step" id="finalSuccessStep">
+            <div class="step-header">
+                <div class="step-icon success-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h1 class="step-title">All Done!</h1>
+                <p class="step-subtitle">Your invoice has been submitted to Beycome</p>
+            </div>
+
+            <div class="success-badge">
+                <div class="success-badge-title" id="finalInvoiceSummary">Invoice Submitted</div>
+                <div class="success-badge-text">Sam will receive your invoice shortly at sam@beycome.com</div>
             </div>
 
             <button class="btn-primary show" onclick="window.location.reload()">
-                Create Another Invoice
+                Submit Another Invoice
             </button>
         </div>
     </div>
@@ -1370,14 +1426,15 @@
         // Send email notification via Web3Forms (free, no backend needed)
         async function sendEmailNotification(data) {
             try {
-                await fetch('https://api.web3forms.com/submit', {
+                const response = await fetch('https://api.web3forms.com/submit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         access_key: '05282e9a-c9b6-41aa-a4fe-0a16c611988d',
-                        subject: `📄 Invoice Submitted — ${data.agentName} | Invoice #${data.invoiceNumber}`,
+                        subject: `Invoice Submitted - ${data.agentName} - Invoice #${data.invoiceNumber}`,
                         from_name: 'Beycome Invoice System',
                         name: data.agentName,
+                        email: 'sam@beycome.com',
                         message: [
                             `BEYCOME CONTRACTOR INVOICE`,
                             `═══════════════════════════════`,
@@ -1404,9 +1461,110 @@
                         ].filter(l => l !== '').join('\n')
                     })
                 });
+                const json = await response.json();
+                console.log('Web3Forms response:', json);
+                if (json.success) {
+                    showToast('📧 Invoice notification sent!', 'success');
+                } else {
+                    showToast('⚠️ PDF saved, but email notification failed: ' + (json.message || 'Unknown error'), 'error');
+                }
             } catch(e) {
                 console.warn('Email notification failed:', e);
+                showToast('⚠️ PDF saved, but email notification failed. Check console.', 'error');
             }
+        }
+
+        let selectedPdfFile = null;
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) setPdfFile(file);
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            const uploadArea = document.getElementById('uploadArea');
+            uploadArea.style.borderColor = '#e2e8f0';
+            uploadArea.style.background = '#f8fafc';
+            const file = event.dataTransfer.files[0];
+            if (file && file.type === 'application/pdf') setPdfFile(file);
+        }
+
+        function setPdfFile(file) {
+            selectedPdfFile = file;
+            document.getElementById('uploadPrompt').style.display = 'none';
+            document.getElementById('uploadSelected').style.display = 'block';
+            document.getElementById('selectedFileName').textContent = file.name;
+            document.getElementById('uploadArea').style.borderColor = '#6EE7B7';
+            document.getElementById('uploadArea').style.background = '#E8FAF5';
+            const btn = document.getElementById('submitPdfBtn');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }
+
+        async function submitPDF() {
+            if (!selectedPdfFile) return;
+            const btn = document.getElementById('submitPdfBtn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            try {
+                // Convert PDF to base64
+                const base64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(selectedPdfFile);
+                });
+
+                const invoiceSummary = document.getElementById('invoiceSummary').textContent;
+
+                const response = await fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        access_key: '05282e9a-c9b6-41aa-a4fe-0a16c611988d',
+                        subject: `Invoice Submitted - ${selectedContractor.name} - ${invoiceSummary}`,
+                        from_name: selectedContractor.name,
+                        email: 'sam@beycome.com',
+                        message: `Invoice submitted by ${selectedContractor.name}.\n\n${invoiceSummary}\n\nPDF attached.`,
+                        attachment: base64,
+                        filename: selectedPdfFile.name
+                    })
+                });
+
+                const json = await response.json();
+
+                if (json.success) {
+                    document.getElementById('finalInvoiceSummary').textContent = invoiceSummary;
+                    document.getElementById('successStep').classList.remove('active');
+                    document.getElementById('finalSuccessStep').classList.add('active');
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Submit Invoice to Beycome';
+                    showToast('⚠️ Submission failed: ' + (json.message || 'Please try again.'), 'error');
+                }
+            } catch(e) {
+                btn.disabled = false;
+                btn.textContent = 'Submit Invoice to Beycome';
+                showToast('⚠️ Submission failed. Please check your connection.', 'error');
+            }
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+                background: ${type === 'success' ? '#065F46' : '#7f1d1d'};
+                color: white; padding: 12px 20px; border-radius: 10px;
+                font-size: 0.875rem; font-weight: 500; z-index: 9999;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+                font-family: 'Plus Jakarta Sans', sans-serif;
+                max-width: 90vw; text-align: center;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
         }
     </script>
 </body>
