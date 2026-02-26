@@ -1154,8 +1154,8 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Generating...';
             
-            setTimeout(() => {
-                const result = generatePDF();
+            setTimeout(async () => {
+                const result = await generatePDF();
                 
                 // Update progress bar
                 document.getElementById('progressFill').style.width = '100%';
@@ -1173,8 +1173,25 @@
             }, 500);
         }
 
+        // Helper to load image as base64 for jsPDF
+        function loadImage(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+
         // Generate PDF
-        function generatePDF() {
+        async function generatePDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
@@ -1203,17 +1220,26 @@
             const contentWidth = pageWidth - (margin * 2);
             
             // Header
-            doc.setFillColor(...coral);
+            doc.setFillColor(21, 35, 48);
             doc.rect(0, 0, pageWidth, 45, 'F');
-            
+
+            // Logo
+            const logoUrl = 'https://samodiofl-boop.github.io/beycome-invoices/assets/beycome-logo.png';
+            try {
+                const img = await loadImage(logoUrl);
+                doc.addImage(img, 'PNG', margin, 10, 50, 20);
+            } catch(e) {
+                // Fallback to text if logo fails to load
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(20);
+                doc.setFont('helvetica', 'bold');
+                doc.text('beycome', margin, 28);
+            }
+
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(24);
             doc.setFont('helvetica', 'bold');
-            doc.text('INVOICE', margin, 28);
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text('beycome.com', pageWidth - margin, 28, { align: 'right' });
+            doc.text('INVOICE', pageWidth - margin, 28, { align: 'right' });
             
             // Main content box
             const boxY = 55;
