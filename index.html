@@ -1423,57 +1423,6 @@
             return { agentName, invoiceNumber, total, payPeriod, paymentType, baseSalary, commissions, incentives, bonuses, deductions, salesDetails, notes };
         }
 
-        // Send email notification via Web3Forms (free, no backend needed)
-        async function sendEmailNotification(data) {
-            try {
-                const response = await fetch('https://api.web3forms.com/submit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        access_key: '05282e9a-c9b6-41aa-a4fe-0a16c611988d',
-                        subject: `Invoice Submitted - ${data.agentName} - Invoice #${data.invoiceNumber}`,
-                        from_name: 'Beycome Invoice System',
-                        name: data.agentName,
-                        email: 'sam@beycome.com',
-                        message: [
-                            `BEYCOME CONTRACTOR INVOICE`,
-                            `═══════════════════════════════`,
-                            `Employee:  ${data.agentName}`,
-                            `Invoice #: ${data.invoiceNumber}`,
-                            `Pay Period: ${data.payPeriod}`,
-                            `Payment:   ${data.paymentType}`,
-                            ``,
-                            `Base Salary:  $${data.baseSalary.toFixed(2)}`,
-                            data.commissions > 0 ? `Commissions:  $${data.commissions.toFixed(2)}` : '',
-                            data.incentives > 0  ? `Incentives:   $${data.incentives.toFixed(2)}` : '',
-                            data.bonuses > 0     ? `Bonuses:      $${data.bonuses.toFixed(2)}` : '',
-                            data.deductions > 0  ? `Deductions:  -$${data.deductions.toFixed(2)}` : '',
-                            `───────────────────────────────`,
-                            `TOTAL DUE:    $${data.total.toFixed(2)}`,
-                            ``,
-                            `Sales Details:`,
-                            data.salesDetails || 'N/A',
-                            ``,
-                            `Notes:`,
-                            data.notes || 'N/A',
-                            ``,
-                            `Submitted: ${new Date().toLocaleString('en-US')}`
-                        ].filter(l => l !== '').join('\n')
-                    })
-                });
-                const json = await response.json();
-                console.log('Web3Forms response:', json);
-                if (json.success) {
-                    showToast('📧 Invoice notification sent!', 'success');
-                } else {
-                    showToast('⚠️ PDF saved, but email notification failed: ' + (json.message || 'Unknown error'), 'error');
-                }
-            } catch(e) {
-                console.warn('Email notification failed:', e);
-                showToast('⚠️ PDF saved, but email notification failed. Check console.', 'error');
-            }
-        }
-
         let selectedPdfFile = null;
 
         function handleFileSelect(event) {
@@ -1525,7 +1474,7 @@
             formData.append('from_name', selectedContractor.name);
             formData.append('email', 'sam@beycome.com');
             formData.append('message', `Invoice submitted by ${selectedContractor.name}.\n\n${invoiceSummary}`);
-            formData.append('attachment', selectedPdfFile, selectedPdfFile.name);
+            formData.append('attachment[]', selectedPdfFile, selectedPdfFile.name);
 
             // No headers — browser auto-adds correct multipart/form-data boundary
             fetch('https://api.web3forms.com/submit', {
